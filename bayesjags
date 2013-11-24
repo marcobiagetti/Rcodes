@@ -1,0 +1,30 @@
+#needs to download and install jags software before
+
+set.seed(1337)
+y<-rnorm(n=20,mean=10,sd=5)
+mean(y)
+sd(y)
+install.packages("rjags")
+install.packages("rstan")
+install.packages("LaplacesDemon")
+library(rjags)
+#library(rstan);library(LaplacesDemon) not working actually
+
+#model specification y as n(mu,sigma), mu as n(m=0,sd=100), sigma as logn(m=0,sd=4)
+model_string<-"model{
+for (i in 1:length(y)){
+y[i]~dnorm(mu,tau)
+}
+mu~dnorm(0,0.0001) #JAGS parameterizes using precision = 1/sigma^2 1/100^2=0.0001
+sigma~dlnorm(0,0.0625)#JAGS parameterizes using precision = 1/sigma^2 1/4^2=0.0625
+tau<-1/pow(sigma,2)
+}"
+model<-jags.model(textConnection(model_string),data=list(y=y),
+                  n.chains=3,n.adapt=10000)
+update(model,10000) #burn in for 10000 samples
+mcmc_samples<-coda.samples(model,variable.names=c("mu","sigma"),n.iter=20000)
+pdf("mcmc.pdf")
+plot(mcmc_samples)
+dev.off()
+summary(mcmc_samples)
+
