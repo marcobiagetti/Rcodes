@@ -1,0 +1,36 @@
+install.packages("tseries")
+library(tseries)
+library(zoo)
+setwd("C:/Users/Roby/Dropbox/R codes")
+#Load security data from Yahoo! Finance
+prices1<-get.hist.quote("SPY",quote="Adj",provider="Yahoo", 
+                         start="2007-01-01",retclass="zoo")
+#Adj=adjusted for dividends
+head(prices1)
+tail(prices1)
+which(prices1==180.05)
+prices1<-na.locf(prices1) #copy last traded price when NA
+head(prices1)
+tail(prices1)
+#to make week end prices:
+nextfri.date<-function(x) 7*ceiling(as.numeric(x-1)/7)+as.Date(1)
+#ceiling the integer immediately greater
+weekly.prices<-aggregate(prices1,nextfri.date,tail,1)
+#nextfri = end of the week
+#aggregate = subset prices and apply the function tail
+
+#to convert month end prices:
+monthly.prices<-aggregate(prices1,as.yearmon,tail,1)
+#as.yearmon=end of the month
+
+#convert weekly prices into weekly returns
+logr.weekly<-diff(log(weekly.prices)) #log returns
+r.weekly<-exp(logr.weekly)-1 #simple returns
+
+#convert monthly prices into monthly return
+logr.monthly<-diff(log(monthly.prices)) #log returns
+r.monthly<-exp(logr.monthly)-1 #simple returns
+
+#write output data to csv file
+write.zoo(r.weekly,file="weekly.csv",sep=";",col.names=c("Dates","Percent Return"))
+write.zoo(r.monthly,file="monthly.csv",sep=";",col.names=c("Dates","Percent Return"))
