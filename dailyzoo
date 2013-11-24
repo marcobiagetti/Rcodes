@@ -1,0 +1,17 @@
+rm(list=ls())
+getwd()
+setwd("C:/Users/Roby/Dropbox/R codes")
+db<-read.csv("Marco.csv",sep=";",na.strings="#N/D",header=T)
+head(db)
+tail(db)
+class(db)
+dim(db)
+head(db[,2:11])
+library(tseries)
+library(zoo)
+class("DATE")
+db.ts<-zoo(db[,2:11],as.Date(db[,1],format="%d/%m/%Y")) #creating a zoo object with columns 2 through 11 by a date given by column 1 with a given date format
+head(db.ts)
+tail(db.ts)
+db.ts<-na.locf(db.ts) #replacing NA with prior values
+tail(db.ts)
