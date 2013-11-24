@@ -1,0 +1,49 @@
+#Laplace approximation of normal (i.e. symmetric) 
+#posterior distributions with a small n
+#generating a normal n=20 m=10, sd=5
+#Laplace approximation only needs the mode, treats it as the mean and
+#then compute the variance, by analyzing the curvature around the mode/mean
+set.seed(1337)
+y<-rnorm(20,10,5)
+c(mean=mean(y),sd=sd(y))
+
+#calculating the unnormalized log posterior of the model: y as n (mu,sigma)
+#mu as n(0,100) sigma as lnorm (0,4)
+#parameter=p, datapoints=y
+
+model<-function(p,y){
+log_lik<-sum(dnorm(y,p["mu"],p["sigma"],log=T)) #log likelihood
+log_post<-log_lik+dnorm(p["mu"],0,100,log=T)+dlnorm(p["sigma"],0,4,log=T)
+log_post
+}
+inits<-c(mu=0,sigma=1)
+fit<-optim(inits,model,control=list(fnscale=-1),hessian=T,y=y)
+str(fit) #sees arguments created
+
+#optim finds the mode of the two-dimensional posterior distribution
+#control=list(fnscale=-1) because the standard behavior of optim
+#is to minimize rather than maximize: setting fnscale=-1 fixes this
+#hessian=T because we want to optimized also the hessian matrix
+#not only the maximum. Hessian matrix describes the curvature of
+#the function at the maximum
+
+#found maximum = fit$par = mode of the posterior = mean of the
+#of the multivariate normal approximation to the posterior
+
+#inverse of the negative hessian = variance covariance matrix of our
+#multivariate normal
+
+param_mean=fit$par;fit$par
+param_cov_mat=solve(-fit$hessian)
+round(param_mean,3)#rounds at third decimal value
+round(param_cov_mat,3)
+
+#install.packages("rmvnorm")
+library(mvtnorm)
+samples<-rmvnorm(10000,param_mean,param_cov_mat)#drawing 10000 from mv normal
+samples<-cbind(samples,pred=rnorm(n=nrow(samples),samples[,"mu"],
+               samples[,"sigma"])) #take a look at the posterior predictive distr
+
+library(coda)
+samples<-mcmc(samples)
+densityplot(samples)
