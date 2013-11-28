@@ -1,0 +1,78 @@
+lmm.data<-read.table("http://www.unt.edu/rss/class/Jon/R_SC/Module9/lmm.data.txt", 
+            header=T,sep=",",na.strings="NA",dec=".",strip.white=TRUE)
+summary(lmm.data)
+head(lmm.data)
+
+#1 OLS R2 very low
+OLSexamp<-lm(extro~open+agree+social,data=lmm.data)
+display(OLSexamp)
+
+#2 glm MLE
+MLexamp<-glm(extro~open+agree+social,data=lmm.data)
+display(MLexamp)
+
+#AIC
+AIC(MLexamp)
+
+#3 glm with varying intercept by class (fixed effects)
+MLexamp.2<-glm(extro~open+agree+social+class,data=lmm.data)
+display(MLexamp.2)
+
+AIC(MLexamp.2)
+
+anova(MLexamp,MLexamp.2,test="F")
+
+MLexamp.3<-glm(extro~open+agree+social+school,data=lmm.data)
+display(MLexamp.3)
+
+AIC(MLexamp.3)
+#much better. AIC is strongly reduced
+
+table(lmm.data$school,lmm.data$class)
+#perfectly balanced design
+
+#glm with interaction school and class
+MLexamp.4<-glm(extro~open+agree+social+school:class, 
+                data=lmm.data)
+display(MLexamp.4)
+
+AIC(MLexamp.4)
+#great improvement
+
+#all of the effects
+MLexamp.5<-glm(extro~open+agree+social+school*class-1, 
+                data=lmm.data)
+display(MLexamp.5)
+
+AIC(MLexamp.5)
+
+#different models for each combinations of school and class
+
+require(plyr)
+
+modellist<-dlply(lmm.data,.(school, class),function(x) glm(extro~open+ 
+    agree + social,data=x))
+attributes(modellist)
+display(modellist[[1]])
+display(modellist[[2]])
+
+#lme: varying intercept with school
+
+MLexamp.6<-lmer(extro~open+agree+social+(1|school),data=lmm.data)
+display(MLexamp.6)
+
+#lme: varying intercept with school and class
+
+MLexamp.7<-lmer(extro~open+agree+social+(1|school)+(1|class),data=lmm.data)
+display(MLexamp.7)
+
+#lme: Mixed nested group effects. Intercept varies by school and classes are nested within schools
+
+MLexamp.8<-lmer(extro~open+agree+social+(1|school/class),data=lmm.data)
+display(MLexamp.8)
+
+#lme with slope of open varying by school
+
+MLexamp.9<-lmer(extro=open+agree+social+(1+open|school/class),data=lmm.data)
+display(MLexamp.9)
+
