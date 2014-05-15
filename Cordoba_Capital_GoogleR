@@ -1,0 +1,4 @@
+require(ggmap)
+mapImageData<-get_map(location=c(lon=-64.18,lat=-31.415),color="color",
+                      source="google",maptype="hybrid",zoom=16)
+ggmap(mapImageData,extent = "device",ylab = "Latitude",xlab = "Longitude")
