@@ -1,0 +1,88 @@
+concordant<-function(x) {
+            x<-matrix(as.numeric(x),dim(x))
+# prendo sum(matrice valori>r AND >c)
+# per ogni matrice[r, c]
+mat.lr<-function(r,c){ 
+        lr<-x[(r.x>r) & (c.x>c)]
+        sum(lr)}
+# prendo l'indice di riga e colonna per ogni elemento della matrice
+r.x<-row(x)
+c.x<-col(x)
+
+# ottengo la somma di ogni matrice [r, c] * somme
+# utilizzando mapply per fare la sequenza su ogni matrice [r, c]
+sum(x * mapply(mat.lr, r=r.x, c=c.x))
+}
+
+# Calcolo delle coppie discordi su una tavola
+# ciclo su x[r,c] e moltiplicazione per 
+# sum(x elementi sotto e a destra di x[r, c])
+# x = tavola
+discordant<-function(x) {
+            x<-matrix(as.numeric(x),dim(x))
+# prendo sum(matrice valori>r AND <c)
+# for each matrix[r, c]
+  mat.ll<-function(r,c){ 
+          ll<-x[(r.x>r) & (c.x<c)]
+           sum(ll)}
+# prendo l'indice di riga e colonna per ogni elemento della matrice
+r.x<-row(x)
+c.x<-col(x)
+
+# ottengo la somma di ogni matrice [r, c] * somme
+# utilizzando mapply per fare la sequenza su ogni matrice [r, c]
+sum(x*mapply(mat.ll,r=r.x,c=c.x))
+}
+
+#Kendall_tau_c = (c-d)*((2*m)/n^2*(m-1) )#
+# Calcolo lo Kendall-Stuart Tau-c
+# x=tavola
+calc.KSTc<-function(x)
+{
+x<-matrix(as.numeric(x),dim(x))
+c<-concordant(x)
+d<-discordant(x)
+m<-min(dim(x))
+n<-sum(x)
+n2<-n^2
+KSTc=(c-d)*((2*m)/(n2*(m-1)))
+KSTc
+}
+
+#prova con Accessibility/Accessibility
+calc.KSTc(with(db_freq_plot,table(Accessibility,Accessibility)))
+
+#matrice di kendall tau_c
+kendall_tau_c<-array(0,dim=c(14,14));kendall_tau_c
+for (i in seq_along(db_freq_plot)) {
+for (j in seq_along(db_freq_plot)) {
+kendall_tau_c[i,j]=calc.KSTc(table(db_freq_plot[,i],db_freq_plot[,j]))
+kendall_tau_c
+}
+}
+colnames(kendall_tau_c)<-names(db_freq_plot)
+rownames(kendall_tau_c)<-names(db_freq_plot)
+kendall_tau_c
+#tau_c aggiusta tenendo conto della grandezza della tavola
+
+
+#Goodman & Kruskall's Gamma: (c-d)/(c+d)
+calc.GK.gamma<-function(x)
+{
+c<-concordant(x)
+d<-discordant(x)
+GKgammac<-(c-d)/(c+d)
+GKgammac
+}
+
+#matrice di Gamma di Goodman & Kruskall#
+GK_gamma<-array(0,dim=c(14,14));GK_gamma
+for (i in seq_along(db_freq_plot)) {
+for (j in seq_along(db_freq_plot)) {
+GK_gamma[i,j]=calc.GK.gamma(table(db_freq_plot[,i],db_freq_plot[,j]))
+GK_gamma
+}
+}
+colnames(GK_gamma)<-names(db_freq_plot)
+rownames(GK_gamma)<-names(db_freq_plot)
+GK_gamma
