@@ -1,0 +1,89 @@
+#########################Kónya's test#################################################################
+#constraints - constrained SUR
+
+#imposing restrictions on coefficient of lsdv_res_l1
+mat_coef<-matrix(0,nrow=17,ncol=85);mat_coef
+mat_coef[1,3]<-1
+mat_coef[2,8]<-1
+mat_coef[3,13]<-1
+mat_coef[4,18]<-1
+mat_coef[5,23]<-1
+mat_coef[6,28]<-1
+mat_coef[7,33]<-1
+mat_coef[8,38]<-1
+mat_coef[9,43]<-1
+mat_coef[10,48]<-1
+mat_coef[11,53]<-1
+mat_coef[12,58]<-1
+mat_coef[13,63]<-1
+mat_coef[14,68]<-1
+mat_coef[15,73]<-1
+mat_coef[16,78]<-1
+mat_coef[17,83]<-1
+qrestr<-c(rep(0,17));qrestr
+fitsur_restr<-systemfit(list(ARreg=e1,ATreg=e2,BEreg=e3,BRreg=e4,CLreg=e5,COreg=e6,DEreg=e7,ESreg=e8,FIreg=e9,
+                        FRreg=e10,IEreg=e11,ITreg=e12,LUreg=e13,NLreg=e14,PEreg=e15,PTreg=e16,VEreg=e17),method="SUR",data=db,
+                        restrict.matrix=mat_coef, restrict.rhs=qrestr)
+summary(fitsur_restr)
+
+residuals(fitsur_restr)
+mat_res<-t(residuals(fitsur_restr));mat_res;
+mat_res<-mat_res[,-c(1,2)]#dropping NA columns
+colnames(mat_res)<-1995:2014 #naming columns by year Step 1 achieved
+dim(mat_res)
+
+
+s1<-matrix(0,10000,17);head(s1);tail(s1) #initializing a matrix where to store F statistics results. 10K times for 17 countries
+for(z in 1:10000){
+sampl_size<-1 #one column at a time
+iter<-100 #100 iterations
+samp<-sample(1:ncol(mat_res),sampl_size*iter,replace=T) #sampling the column index with replacement as T* can be larger than T
+samp_res<-matrix(0,ncol=101,nrow=17) #initializing a matrix where to store residuals of the columns samples
+for (i in 1:length(samp)){
+samp_res[,i+1]<-cbind(mat_res[,samp[i]])
+} #residuals in columns
+
+v<-array(0,dim=c(17,101)) #initializing a vector where to put y* = v in our case (see just below)
+mat_coef<-matrix(coef(fitsur_restr),ncol=5,nrow=17,byrow=T);colnames(mat_coef)<-c("Int","drel_l1","lsdv_res_l1","hc_l1","iq_l1")
+rownames(mat_coef)<-c(cod_nat)
+for (u in 1:dim(v)[1]) {
+for (q in 2:dim(v)[2]) {
+v[u,q]<-mat_coef[u,1]+mat_coef[u,2]*v[u,q-1]+samp_res[u,q] #obtaining y*
+}
+}
+rownames(v)<-cod_nat
+v<-v[,-1]
+v<-cbind(NA,v[,-1])
+va_l1<-cbind(NA,v[,-100]) #obtaining y*t-1
+#below here another SUR is estimated with y* = v
+e1<-v[1,1:22]~va_l1[1,1:22]+lsdv_res_l1AR+hc_l1AR+inst_qual_l1AR
+e2<-v[2,1:22]~va_l1[2,1:22]+lsdv_res_l1AT+hc_l1AT+inst_qual_l1AT
+e3<-v[3,1:22]~va_l1[3,1:22]+lsdv_res_l1BE+hc_l1BE+inst_qual_l1BE
+e4<-v[4,1:22]~va_l1[4,1:22]+lsdv_res_l1BR+hc_l1BR+inst_qual_l1BR
+e5<-v[5,1:22]~va_l1[5,1:22]+lsdv_res_l1CL+hc_l1CL+inst_qual_l1CL
+e6<-v[6,1:22]~va_l1[6,1:22]+lsdv_res_l1CO+hc_l1CO+inst_qual_l1CO
+e7<-v[7,1:22]~va_l1[7,1:22]+lsdv_res_l1DE+hc_l1DE+inst_qual_l1DE
+e8<-v[8,1:22]~va_l1[8,1:22]+lsdv_res_l1ES+hc_l1ES+inst_qual_l1ES
+e9<-v[9,1:22]~va_l1[9,1:22]+lsdv_res_l1FI+hc_l1FI+inst_qual_l1FI
+e10<-v[10,1:22]~va_l1[10,1:22]+lsdv_res_l1FR+hc_l1FR+inst_qual_l1FR
+e11<-v[11,1:22]~va_l1[11,1:22]+lsdv_res_l1IE+hc_l1IE+inst_qual_l1IE
+e12<-v[12,1:22]~va_l1[12,1:22]+lsdv_res_l1IT+hc_l1IT+inst_qual_l1IT
+e13<-v[13,1:22]~va_l1[13,1:22]+lsdv_res_l1LU+hc_l1LU+inst_qual_l1LU
+e14<-v[14,1:22]~va_l1[14,1:22]+lsdv_res_l1NL+hc_l1NL+inst_qual_l1NL
+e15<-v[15,1:22]~va_l1[15,1:22]+lsdv_res_l1PE+hc_l1PE+inst_qual_l1PE
+e16<-v[16,1:22]~va_l1[16,1:22]+lsdv_res_l1PT+hc_l1PT+inst_qual_l1PT
+e17<-v[17,1:22]~va_l1[17,1:22]+lsdv_res_l1VE+hc_l1VE+inst_qual_l1VE
+
+fitsur.res<-systemfit(list(ARreg=e1,ATreg=e2,BEreg=e3,BRreg=e4,CLreg=e5,COreg=e6,DEreg=e7,ESreg=e8,FIreg=e9,
+                        FRreg=e10,IEreg=e11,ITreg=e12,LUreg=e13,NLreg=e14,PEreg=e15,PTreg=e16,VEreg=e17),method="SUR")
+#below here the F statistics are computed with l as a linear restriction
+wf<-rep(0,17)
+for (k in 1:17) {
+rms<-matrix(0,ncol=5,nrow=1)
+rms[1,3]<-1
+qvec<-c(0)
+l<-linearHypothesis(fitsur.res$eq[[k]],rms,qvec,test="F")
+wf[k]<-l[2,3]
+}
+s1[z,]<-wf
+}
